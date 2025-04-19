@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import Peer from 'simple-peer';
 import { iceServers } from '../config/iceServers';
-import { SOCKET_URL } from '../config/environment';
+import { API_URL } from '../config/environment';
 import './VideoChat.css';
 
 const VideoChat = () => {
@@ -16,50 +15,48 @@ const VideoChat = () => {
   const [callEnded, setCallEnded] = useState(false);
   const [name, setName] = useState("");
   const [otherUser, setOtherUser] = useState("");
-  const [users, setUsers] = useState([]);
   const [callState, setCallState] = useState("idle"); // idle, calling, connected, ended
   const [connectionError, setConnectionError] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [peerId, setPeerId] = useState(null);
 
   const myVideo = useRef();
   const partnerVideo = useRef();
   const connectionRef = useRef();
-  const socketRef = useRef();
+  const pollingIntervalRef = useRef();
 
+  // Register user and get signals
   useEffect(() => {
-    // Connect to the signaling server with better configuration
-    socketRef.current = io(SOCKET_URL, {
-      path: '/socket.io',
-      transports: ['polling'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnection: true,
-      forceNew: true,
-      timeout: 20000
-    });
-    
-    // Log connection status for debugging
-    socketRef.current.on('connect', () => {
-      console.log('Socket connected successfully');
-      setConnectionError(false);
-    });
-    
-    // Add more detailed error handling
-    socketRef.current.on('connect_error', (err) => {
-      console.error("Socket connection error:", err.message);
-      setConnectionError(true);
-    });
-    
-    socketRef.current.on('connect_timeout', () => {
-      console.error("Socket connection timeout");
-      setConnectionError(true);
-    });
-    
-    socketRef.current.on('error', (err) => {
-      console.error("Socket error:", err.message);
-      setConnectionError(true);
-    });
-    
-    // Request access to user's camera and microphone
+    // Register user
+    const registerUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/rtc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'register'
+          })
+        });
+        
+        const data = await response.json();
+        if (data.userId) {
+          console.log('Registered with ID:', data.userId);
+          setUserId(data.userId);
+        } else {
+          console.error('Failed to register user');
+          setConnectionError(true);
+        }
+      } catch (error) {
+        console.error('Error registering user:', error);
+        setConnectionError(true);
+      }
+    };
+
+    registerUser();
+
+    // Request camera and microphone
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((currentStream) => {
         setStream(currentStream);
@@ -71,29 +68,101 @@ const VideoChat = () => {
         console.error("Error accessing media devices:", err);
         setConnectionError(true);
       });
+      
+    // Clean up
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      // Notify server that we're leaving
+      if (userId) {
+        leaveRoom();
+      }
+    };
+  }, []);
 
-    // Listen for the user ID from the server
-    socketRef.current.on("me", (id) => {
-      console.log("My ID:", id);
-    });
+  // Setup signal polling when userId is set
+  useEffect(() => {
+    if (!userId) return;
 
-    // Listen for incoming calls
-    socketRef.current.on("callUser", (data) => {
-      setReceivingCall(true);
-      setCaller(data.from);
-      setOtherUser(data.name);
-      setCallerSignal(data.signal);
-    });
+    // Setup interval to poll for signals
+    const pollSignals = async () => {
+      try {
+        const response = await fetch(`${API_URL}/rtc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'get-signals',
+            userId
+          })
+        });
+        
+        const data = await response.json();
+        if (data.signals && data.signals.length > 0) {
+          // Process each signal
+          data.signals.forEach(signal => {
+            handleIncomingSignal(signal);
+          });
+        }
+      } catch (error) {
+        console.error('Error polling signals:', error);
+      }
+    };
 
-    // Listen for available users
-    socketRef.current.on("allUsers", (userList) => {
-      setUsers(userList);
-    });
+    // Start polling
+    pollingIntervalRef.current = setInterval(pollSignals, 1000);
 
-    // Listen for call ended event
-    socketRef.current.on("callEnded", () => {
+    // Check room status
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`${API_URL}/rtc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'check-status',
+            userId
+          })
+        });
+        
+        const data = await response.json();
+        if (data.matched && data.peerId && !peerId) {
+          // We've been matched with someone
+          setPeerId(data.peerId);
+          
+          // If we're the initiator, start the call
+          if (data.initiator) {
+            initiateCall(data.peerId);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking status:', error);
+      }
+    };
+
+    // Check status every 2 seconds
+    const statusInterval = setInterval(checkStatus, 2000);
+
+    // Clean up
+    return () => {
+      clearInterval(pollingIntervalRef.current);
+      clearInterval(statusInterval);
+    };
+  }, [userId, peerId]);
+
+  // Handle incoming signals
+  const handleIncomingSignal = (signalData) => {
+    if (signalData.type === 'leave') {
+      // The other user left
       setCallEnded(true);
-      setCallState("ended");
+      setCallState('ended');
+      
       if (connectionRef.current) {
         connectionRef.current.destroy();
       }
@@ -103,45 +172,94 @@ const VideoChat = () => {
         setCallAccepted(false);
         setReceivingCall(false);
         setCallEnded(false);
-        setCallState("idle");
+        setCallState('idle');
+        setPeerId(null);
       }, 2000);
-    });
-
-    // Listen for user disconnected event
-    socketRef.current.on("userDisconnected", (userId) => {
-      if (userId === caller) {
-        setCallEnded(true);
-        setCallState("ended");
+      
+      return;
+    }
+    
+    // Handle WebRTC signal
+    if (signalData.signal) {
+      if (!callAccepted && !receivingCall) {
+        // We're receiving a call
+        setReceivingCall(true);
+        setCaller(signalData.from);
+        setOtherUser(signalData.from);
+        setCallerSignal(signalData.signal);
+      } else if (!callAccepted && receivingCall) {
+        // Ongoing call negotiation
+        setCallerSignal(signalData.signal);
+      } else if (callAccepted) {
+        // Call is already accepted, pass signal to peer
         if (connectionRef.current) {
-          connectionRef.current.destroy();
+          connectionRef.current.signal(signalData.signal);
         }
-        
-        // Reset the call state after a delay
-        setTimeout(() => {
-          setCallAccepted(false);
-          setReceivingCall(false);
-          setCallEnded(false);
-          setCallState("idle");
-        }, 2000);
       }
-    });
+    }
+  };
 
-    // Clean up on component unmount
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-      if (connectionRef.current) {
-        connectionRef.current.destroy();
-      }
-    };
-  }, []);
+  // Send a signal to another user
+  const sendSignal = async (targetId, signal) => {
+    if (!userId || !targetId) return;
 
-  const callUser = (id) => {
-    setCallState("calling");
+    try {
+      await fetch(`${API_URL}/rtc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'signal',
+          userId,
+          targetId,
+          signal
+        })
+      });
+    } catch (error) {
+      console.error('Error sending signal:', error);
+    }
+  };
+
+  // Join the waiting room
+  const startRandomChat = async () => {
+    if (!userId) {
+      console.error('No user ID');
+      return;
+    }
+
+    setCallState('calling');
+
+    try {
+      const response = await fetch(`${API_URL}/rtc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'join-waiting',
+          userId
+        })
+      });
+      
+      const data = await response.json();
+      if (data.matched && data.peerId) {
+        // We've been matched with someone
+        setPeerId(data.peerId);
+        initiateCall(data.peerId);
+      } else {
+        console.log('Added to waiting list, waiting for match...');
+      }
+    } catch (error) {
+      console.error('Error joining waiting room:', error);
+      setConnectionError(true);
+    }
+  };
+
+  // Initiate a call to another user
+  const initiateCall = (targetId) => {
+    setCallState('calling');
+    
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -149,40 +267,29 @@ const VideoChat = () => {
       config: iceServers
     });
 
-    peer.on("signal", (data) => {
-      socketRef.current.emit("callUser", {
-        userToCall: id,
-        signalData: data,
-        from: socketRef.current.id,
-        name: name
-      });
+    peer.on('signal', (data) => {
+      sendSignal(targetId, data);
     });
 
-    peer.on("stream", (partnerStream) => {
+    peer.on('stream', (partnerStream) => {
       if (partnerVideo.current) {
         partnerVideo.current.srcObject = partnerStream;
       }
     });
 
-    peer.on("error", (err) => {
-      console.error("Peer connection error:", err);
+    peer.on('error', (err) => {
+      console.error('Peer connection error:', err);
       setConnectionError(true);
       endCall();
-    });
-
-    socketRef.current.on("callAccepted", (data) => {
-      setCallAccepted(true);
-      setCallState("connected");
-      setOtherUser(data.name);
-      peer.signal(data.signal);
     });
 
     connectionRef.current = peer;
   };
 
+  // Answer an incoming call
   const answerCall = () => {
     setCallAccepted(true);
-    setCallState("connected");
+    setCallState('connected');
     setReceivingCall(false);
     
     const peer = new Peer({
@@ -192,20 +299,16 @@ const VideoChat = () => {
       config: iceServers
     });
 
-    peer.on("signal", (data) => {
-      socketRef.current.emit("answerCall", { 
-        signal: data, 
-        to: caller,
-        name: name
-      });
+    peer.on('signal', (data) => {
+      sendSignal(caller, data);
     });
 
-    peer.on("stream", (partnerStream) => {
+    peer.on('stream', (partnerStream) => {
       partnerVideo.current.srcObject = partnerStream;
     });
 
-    peer.on("error", (err) => {
-      console.error("Peer connection error:", err);
+    peer.on('error', (err) => {
+      console.error('Peer connection error:', err);
       setConnectionError(true);
       endCall();
     });
@@ -214,38 +317,49 @@ const VideoChat = () => {
     connectionRef.current = peer;
   };
 
+  // End a call
   const endCall = () => {
     setCallEnded(true);
-    setCallState("ended");
+    setCallState('ended');
+    
     if (connectionRef.current) {
       connectionRef.current.destroy();
     }
     
-    // Inform the other user that the call has ended
-    socketRef.current.emit("endCall", { to: caller });
+    // Notify server we're leaving
+    leaveRoom();
     
     // Reset the call state after a delay
     setTimeout(() => {
       setCallAccepted(false);
       setReceivingCall(false);
       setCallEnded(false);
-      setCallState("idle");
+      setCallState('idle');
+      setPeerId(null);
     }, 2000);
   };
 
-  const startRandomChat = () => {
-    // Request a random user to chat with
-    socketRef.current.emit("findRandomUser", { from: socketRef.current.id });
-    
-    // Listen for the match
-    socketRef.current.on("userMatched", (data) => {
-      // If we are the initiator, call the other user
-      if (data.initiator === socketRef.current.id) {
-        callUser(data.targetUser);
-      }
-    });
+  // Notify server we're leaving the room
+  const leaveRoom = async () => {
+    if (!userId) return;
+
+    try {
+      await fetch(`${API_URL}/rtc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'leave-room',
+          userId
+        })
+      });
+    } catch (error) {
+      console.error('Error leaving room:', error);
+    }
   };
 
+  // Retry connection
   const retryConnection = () => {
     setConnectionError(false);
     window.location.reload();
@@ -259,7 +373,7 @@ const VideoChat = () => {
           <p>There was an error connecting to the video chat service. This could be due to:</p>
           <ul>
             <li>Camera or microphone access denied</li>
-            <li>Connection issues with the signaling server</li>
+            <li>Connection issues with the server</li>
             <li>WebRTC not supported in your browser</li>
           </ul>
           <button className="retry-button" onClick={retryConnection}>Retry Connection</button>
@@ -272,7 +386,7 @@ const VideoChat = () => {
   return (
     <div className="video-chat-container">
       <div className="video-chat-header">
-        <h1>Omegle Video Chat</h1>
+        <h1>Video Chat</h1>
         <button 
           className="back-button"
           onClick={() => navigate('/home')}
@@ -293,6 +407,7 @@ const VideoChat = () => {
             <button 
               className="start-chat-button"
               onClick={startRandomChat}
+              disabled={!userId}
             >
               Start Random Chat
             </button>
