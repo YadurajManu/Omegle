@@ -26,8 +26,21 @@ const VideoChat = () => {
   const socketRef = useRef();
 
   useEffect(() => {
-    // Connect to the signaling server using environment config
-    socketRef.current = io(SOCKET_URL);
+    // Connect to the signaling server using environment config with additional options
+    socketRef.current = io(SOCKET_URL, {
+      path: '/socket.io/',
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnection: true,
+      forceNew: true
+    });
+    
+    // Log connection status for debugging
+    socketRef.current.on('connect', () => {
+      console.log('Socket connected successfully');
+      setConnectionError(false);
+    });
     
     // Request access to user's camera and microphone
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })

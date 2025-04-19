@@ -5,7 +5,7 @@ const ENV = {
     API_URL: 'http://localhost:8000/api'
   },
   production: {
-    SOCKET_URL: 'https://omegle-eosin.vercel.app/api',
+    SOCKET_URL: 'https://omegle-eosin.vercel.app',
     API_URL: 'https://omegle-eosin.vercel.app/api'
   }
 };
