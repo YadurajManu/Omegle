@@ -373,4 +373,32 @@ input::placeholder {
     padding: 12px 0;
     font-size: 0.95rem;
   }
+}
+
+/* Error message */
+.error-message {
+  background-color: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  color: rgb(255, 100, 92);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Button disabled state */
+.login-button:disabled,
+.social-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Loading state for buttons */
+.login-button:disabled:hover,
+.social-login-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
 } 

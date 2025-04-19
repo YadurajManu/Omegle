@@ -1,0 +1,129 @@
+.homepage-container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-black);
+  color: var(--color-white);
+}
+
+.homepage-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: rgba(35, 35, 35, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.logo-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-orange);
+  border-radius: 50%;
+  margin-left: 4px;
+}
+
+.logout-button {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: var(--color-white);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.homepage-content {
+  max-width: 800px;
+  margin: 5rem auto;
+  padding: 0 2rem;
+  text-align: center;
+}
+
+.homepage-content h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, var(--color-orange) 0%, var(--color-orange-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-message {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 3rem;
+}
+
+.actions-container {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.action-button {
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.action-button.primary {
+  background: linear-gradient(90deg, var(--color-orange) 0%, var(--color-orange-light) 100%);
+  border: none;
+  color: white;
+}
+
+.action-button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--color-orange);
+  color: var(--color-orange);
+}
+
+.action-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.action-button.primary:hover {
+  box-shadow: 0 7px 14px rgba(255, 107, 53, 0.3);
+}
+
+@media (max-width: 768px) {
+  .homepage-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .welcome-message {
+    font-size: 1rem;
+  }
+
+  .actions-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+} 

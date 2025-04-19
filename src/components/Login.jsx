@@ -1,16 +1,69 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { logInWithEmailAndPassword, registerWithEmailAndPassword, signInWithGoogle, auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate('/home');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login/signup logic here
-    console.log(isSignUp ? 'Sign up with:' : 'Login with:', { email, password });
+    setError('');
+    setLoading(true);
+
+    try {
+      let result;
+      
+      if (isSignUp) {
+        result = await registerWithEmailAndPassword(email, password);
+      } else {
+        result = await logInWithEmailAndPassword(email, password);
+      }
+
+      if (result.success) {
+        navigate('/home');
+      } else {
+        setError(result.error || 'An error occurred');
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    
+    try {
+      const result = await signInWithGoogle();
+      if (result.success) {
+        navigate('/home');
+      } else {
+        setError(result.error || 'An error occurred with Google sign in');
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,6 +96,8 @@ const Login = () => {
           </p>
         </div>
 
+        {error && <div className="error-message">{error}</div>}
+
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -57,6 +112,7 @@ const Login = () => {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
+                disabled={loading}
               />
             </div>
           </div>
@@ -79,13 +135,14 @@ const Login = () => {
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
-                minLength={8}
+                minLength={6}
+                disabled={loading}
               />
             </div>
           </div>
 
-          <button type="submit" className="login-button">
-            {isSignUp ? 'Create Account' : 'Log In'}
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Log In'}
           </button>
 
           <div className="login-divider">
@@ -93,7 +150,12 @@ const Login = () => {
           </div>
 
           <div className="social-login">
-            <button type="button" className="social-login-button google-login">
+            <button 
+              type="button" 
+              className="social-login-button google-login"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M21.8055 10.0415H21V10H12V14H17.6515C16.827 16.3285 14.6115 18 12 18C8.6865 18 6 15.3135 6 12C6 8.6865 8.6865 6 12 6C13.5295 6 14.921 6.577 15.9805 7.5195L18.809 4.691C17.023 3.0265 14.634 2 12 2C6.4775 2 2 6.4775 2 12C2 17.5225 6.4775 22 12 22C17.5225 22 22 17.5225 22 12C22 11.3295 21.931 10.675 21.8055 10.0415Z" fill="#FFC107"/>
                 <path d="M3.15295 7.3455L6.43845 9.755C7.32745 7.554 9.48045 6 12 6C13.5295 6 14.921 6.577 15.9805 7.5195L18.809 4.691C17.023 3.0265 14.634 2 12 2C8.15895 2 4.82795 4.1685 3.15295 7.3455Z" fill="#FF3D00"/>
@@ -102,7 +164,7 @@ const Login = () => {
               </svg>
               <span>Google</span>
             </button>
-            <button type="button" className="social-login-button facebook-login">
+            <button type="button" className="social-login-button facebook-login" disabled={loading}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 16.9913 5.65684 21.1283 10.4375 21.8785V14.8906H7.89844V12H10.4375V9.79688C10.4375 7.29063 11.9304 5.90625 14.2146 5.90625C15.3087 5.90625 16.4531 6.10156 16.4531 6.10156V8.5625H15.1921C13.9499 8.5625 13.5625 9.33334 13.5625 10.1242V12H16.3359L15.8926 14.8906H13.5625V21.8785C18.3432 21.1283 22 16.9913 22 12Z" fill="#1877F2"/>
                 <path d="M15.8926 14.8906L16.3359 12H13.5625V10.1242C13.5625 9.33334 13.9499 8.5625 15.1921 8.5625H16.4531V6.10156C16.4531 6.10156 15.3087 5.90625 14.2146 5.90625C11.9304 5.90625 10.4375 7.29063 10.4375 9.79688V12H7.89844V14.8906H10.4375V21.8785C10.9505 21.9595 11.4701 22 12 22C12.5299 22 13.0495 21.9595 13.5625 21.8785V14.8906H15.8926Z" fill="white"/>
@@ -118,7 +180,11 @@ const Login = () => {
             <button 
               type="button" 
               className="switch-button" 
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError('');
+              }}
+              disabled={loading}
             >
               {isSignUp ? 'Log In' : 'Sign Up'}
             </button>
