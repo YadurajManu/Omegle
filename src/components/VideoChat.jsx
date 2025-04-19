@@ -26,21 +26,37 @@ const VideoChat = () => {
   const socketRef = useRef();
 
   useEffect(() => {
-    // Connect to the signaling server using environment config with additional options
+    // Connect to the signaling server with better configuration
     socketRef.current = io(SOCKET_URL, {
-      path: '/socket.io/',
+      path: '/socket.io',
       transports: ['polling'],
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnection: true,
       forceNew: true,
-      timeout: 10000
+      timeout: 20000
     });
     
     // Log connection status for debugging
     socketRef.current.on('connect', () => {
       console.log('Socket connected successfully');
       setConnectionError(false);
+    });
+    
+    // Add more detailed error handling
+    socketRef.current.on('connect_error', (err) => {
+      console.error("Socket connection error:", err.message);
+      setConnectionError(true);
+    });
+    
+    socketRef.current.on('connect_timeout', () => {
+      console.error("Socket connection timeout");
+      setConnectionError(true);
+    });
+    
+    socketRef.current.on('error', (err) => {
+      console.error("Socket error:", err.message);
+      setConnectionError(true);
     });
     
     // Request access to user's camera and microphone
@@ -108,12 +124,6 @@ const VideoChat = () => {
           setCallState("idle");
         }, 2000);
       }
-    });
-
-    // Handle connection errors
-    socketRef.current.on("connect_error", (err) => {
-      console.error("Socket connection error:", err);
-      setConnectionError(true);
     });
 
     // Clean up on component unmount
