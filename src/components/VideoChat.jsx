@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import Peer from 'simple-peer';
 import { iceServers } from '../config/iceServers';
+import { SOCKET_URL } from '../config/environment';
 import './VideoChat.css';
 
 const VideoChat = () => {
@@ -25,8 +26,8 @@ const VideoChat = () => {
   const socketRef = useRef();
 
   useEffect(() => {
-    // Connect to the signaling server using production URL
-    socketRef.current = io('https://omegle-eosin.vercel.app');
+    // Connect to the signaling server using environment config
+    socketRef.current = io(SOCKET_URL);
     
     // Request access to user's camera and microphone
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })

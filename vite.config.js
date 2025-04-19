@@ -13,13 +13,26 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'firebase-vendor': ['firebase/auth', 'firebase/firestore', 'firebase/analytics'],
-          'webrtc-vendor': ['simple-peer', 'socket.io-client']
+          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics']
         }
       }
     }
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'firebase', 'simple-peer', 'socket.io-client']
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'simple-peer',
+      'socket.io-client',
+      'firebase/app',
+      'firebase/auth',
+      'firebase/firestore',
+      'firebase/analytics'
+    ]
+  },
+  define: {
+    'process.env': {},
+    global: 'window'
   }
 })
