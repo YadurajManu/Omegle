@@ -7,11 +7,24 @@ const { stringify } = require('querystring');
 const rooms = new Map();
 const users = new Map();
 
+// Allowed origins for CORS
+const allowedOrigins = ['https://yaduraj.me', 'https://omegle-eosin.vercel.app', 'http://localhost:3000'];
+
 module.exports = async (req, res) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Get the origin from request headers
+  const origin = req.headers.origin;
+  
+  // Set CORS headers - allow specific origins
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Allow all origins as fallback
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -22,6 +35,30 @@ module.exports = async (req, res) => {
 
   // Parse the URL
   const { pathname, query } = parse(req.url, true);
+  
+  // Handle legacy Socket.io requests (to maintain compatibility with old clients)
+  if (pathname.startsWith('/socket.io/')) {
+    // For Socket.io polling requests
+    const socketResponse = {
+      type: 'error',
+      message: 'Socket.io is no longer supported in this API. Please use the new HTTP-based API.'
+    };
+    
+    if (query.sid) {
+      // If there's a session ID, return empty data for polling
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('');
+    } else if (query.transport === 'polling') {
+      // Initial handshake - return a mock handshake response
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('0{"sid":"mock-session-id","upgrades":["websocket"],"pingInterval":25000,"pingTimeout":5000}');
+    } else {
+      // For other Socket.io requests
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(socketResponse));
+    }
+    return;
+  }
   
   // Handle health check
   if (pathname === '/api' || pathname === '/api/status') {
