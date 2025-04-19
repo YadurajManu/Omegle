@@ -14,6 +14,9 @@
   --color-white: #ffffff;
   --color-orange: #ff6b35;
   --color-orange-light: #ff8c5f;
+  --color-gradient-start: #ff6b35;
+  --color-gradient-end: #ff8f59;
+  --cupid-primary-color: #ff6b35;
 }
 
 body {
@@ -45,4 +48,4 @@ a {
 }
 
 /* Import custom font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
