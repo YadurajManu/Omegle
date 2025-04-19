@@ -6,6 +6,7 @@ import HowItWorks from './components/HowItWorks'
 import Footer from './components/Footer'
 import Login from './components/Login'
 import HomePage from './components/HomePage'
+import ForgotPassword from './components/ForgotPassword'
 import { auth } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import './App.css'
@@ -51,6 +52,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route 
             path="/home" 
             element={

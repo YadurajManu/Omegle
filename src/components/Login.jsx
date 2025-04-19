@@ -120,7 +120,7 @@ const Login = () => {
           <div className="form-group">
             <div className="password-label-container">
               <label htmlFor="password">Password</label>
-              {!isSignUp && <a href="#" className="forgot-password">Forgot password?</a>}
+              {!isSignUp && <Link to="/forgot-password" className="forgot-password">Forgot password?</Link>}
             </div>
             <div className="input-container">
               <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
