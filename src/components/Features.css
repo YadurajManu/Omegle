@@ -1,20 +1,71 @@
+/* Enhanced Features Section Styling */
 .features-section {
   background-color: var(--color-dark-grey);
   padding: 6rem 5%;
+  position: relative;
+  overflow: hidden;
 }
 
-.features-container {
-  max-width: 1200px;
-  margin: 0 auto;
+.features-section::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.05) 0%, rgba(255, 107, 53, 0) 70%);
+  top: -200px;
+  right: -200px;
+  z-index: 1;
+}
+
+.features-section::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.03) 0%, rgba(255, 107, 53, 0) 70%);
+  bottom: -100px;
+  left: -100px;
+  z-index: 1;
+}
+
+.section-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.section-tag {
+  display: inline-block;
+  background-color: rgba(255, 107, 53, 0.15);
+  color: var(--color-orange);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
 }
 
 .section-title {
-  text-align: center;
   font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
   color: var(--color-white);
   letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  color: var(--color-light-grey);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 80%;
+  margin: 0 auto;
 }
 
 .highlight {
@@ -22,22 +73,37 @@
   position: relative;
 }
 
+.features-container {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
 }
 
 .feature-card {
-  background-color: var(--color-black);
-  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   padding: 2rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
 }
 
 .feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
 }
 
 .feature-icon {
@@ -46,10 +112,25 @@
   justify-content: center;
   width: 60px;
   height: 60px;
-  background-color: rgba(255, 107, 53, 0.1);
-  border-radius: 50%;
+  background-color: rgba(255, 107, 53, 0.15);
+  border-radius: 12px;
   margin-bottom: 1.5rem;
   color: var(--color-orange);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.feature-card:hover .feature-icon {
+  background-color: var(--color-orange);
+  color: var(--color-white);
+  transform: scale(1.05);
+}
+
+.feature-content {
+  flex: 1;
+  position: relative;
+  z-index: 2;
 }
 
 .feature-card h3 {
@@ -57,11 +138,44 @@
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--color-white);
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover h3 {
+  color: var(--color-orange);
 }
 
 .feature-card p {
   color: var(--color-light-grey);
   line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.feature-number {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.feature-card:hover .feature-number {
+  color: rgba(255, 107, 53, 0.1);
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  .section-subtitle {
+    max-width: 90%;
+  }
 }
 
 @media (max-width: 768px) {
@@ -75,5 +189,10 @@
   
   .features-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .section-subtitle {
+    max-width: 100%;
+    font-size: 1rem;
   }
 } 
