@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Hero from './components/Hero'
 import Features from './components/Features'
@@ -7,6 +7,9 @@ import Footer from './components/Footer'
 import Login from './components/Login'
 import HomePage from './components/HomePage'
 import ForgotPassword from './components/ForgotPassword'
+import ProfilePage from './components/ProfilePage'
+import VideoChat from './components/VideoChat'
+import LoadingFallback from './components/LoadingFallback'
 import { auth } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import './App.css'
@@ -35,7 +38,7 @@ const ProtectedRoute = ({ children }) => {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingFallback />;
   }
 
   if (!user) {
@@ -49,21 +52,46 @@ function App() {
   return (
     <Router>
       <div className="app">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route 
-            path="/home" 
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } 
-          />
-          {/* Add more routes as needed */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route 
+              path="/home" 
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/video-chat" 
+              element={
+                <ProtectedRoute>
+                  <VideoChat />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <div>Settings Page</div>
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </div>
     </Router>
   )

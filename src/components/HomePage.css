@@ -33,6 +33,26 @@
   margin-left: 4px;
 }
 
+.nav-links {
+  display: flex;
+  gap: 12px;
+}
+
+.profile-button {
+  background-color: var(--color-orange);
+  border: none;
+  border-radius: 6px;
+  color: var(--color-white);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.profile-button:hover {
+  background-color: var(--color-orange-light);
+  transform: translateY(-2px);
+}
+
 .logout-button {
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -107,6 +127,76 @@
 
 .action-button.primary:hover {
   box-shadow: 0 7px 14px rgba(255, 107, 53, 0.3);
+}
+
+.profile-cta, .video-chat-cta {
+  margin-top: 5rem;
+  background-color: var(--color-dark-grey);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.video-chat-cta {
+  margin-top: 2rem;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.8) 0%, rgba(50, 50, 50, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-cta h2, .video-chat-cta h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-white);
+}
+
+.profile-cta p, .video-chat-cta p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.profile-cta-button, .video-cta-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-orange);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile-cta-button:hover, .video-cta-button:hover {
+  background-color: var(--color-orange-light);
+  transform: translateY(-2px);
+}
+
+.profile-cta-button svg, .video-cta-button svg {
+  transition: transform 0.3s ease;
+}
+
+.profile-cta-button:hover svg {
+  transform: translateX(3px);
+}
+
+.video-cta-button {
+  background: linear-gradient(90deg, #3a7bd5 0%, #00d2ff 100%);
+}
+
+.video-cta-button:hover {
+  background: linear-gradient(90deg, #2a6ac4 0%, #00bae6 100%);
+  box-shadow: 0 7px 14px rgba(58, 123, 213, 0.3);
+}
+
+.video-cta-button svg {
+  margin-left: 4px;
 }
 
 @media (max-width: 768px) {
