@@ -6,6 +6,10 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/rtc.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -24,8 +28,8 @@
       }
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/api/socket.js",
+      "src": "/api/rtc",
+      "dest": "/api/rtc.js",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -33,7 +37,7 @@
       }
     },
     {
-      "src": "/api/rtc",
+      "src": "/api/(.*)",
       "dest": "/api/socket.js",
       "headers": {
         "Access-Control-Allow-Origin": "*",
