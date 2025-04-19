@@ -29,11 +29,12 @@ const VideoChat = () => {
     // Connect to the signaling server using environment config with additional options
     socketRef.current = io(SOCKET_URL, {
       path: '/socket.io/',
-      transports: ['websocket', 'polling'],
+      transports: ['polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnection: true,
-      forceNew: true
+      forceNew: true,
+      timeout: 10000
     });
     
     // Log connection status for debugging
