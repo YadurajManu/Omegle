@@ -8,7 +8,7 @@ const HowItWorks = () => {
       <div className="section-header">
         <span className="section-tag">Simple Process</span>
         <h2 className="section-title">How it works</h2>
-        <p className="section-subtitle">Start video chatting in less than a minute with our streamlined process</p>
+        <p className="section-subtitle">Start video chatting in less than a minute with our streamlined proess</p>
       </div>
       
       <div className="how-it-works-container">
